@@ -11,23 +11,36 @@ def chunks(l, n):
 def rsa_encrypt(byte_array, open_key, n):
     result = bytearray()
     size = int(gmpy2.ceil(n.bit_length() / 8))
+    size_of_last = len(byte_array) % size
     for decrypted_bytes in chunks(byte_array, size):
         decrypted = int.from_bytes(decrypted_bytes, byteorder='big', signed=False)
         encrypted = int(gmpy2.powmod(decrypted, open_key, n))
         encrypted_bytes = encrypted.to_bytes(size, byteorder='big', signed=False)
         # print(decrypted_bytes, decrypted, encrypted, encrypted_bytes)
         result.extend(encrypted_bytes)
+    result.extend(size_of_last.to_bytes(int(gmpy2.ceil(size_of_last.bit_length() / 8)), byteorder='big', signed=False))
     return result
 
 
 def rsa_decrypt(byte_array, secret_key, n):
     result = bytearray()
     size = int(gmpy2.ceil(n.bit_length() / 8))
+    index_size_of_last = len(byte_array) - len(byte_array) % size
+    size_of_last = int.from_bytes(byte_array[index_size_of_last:], byteorder='big', signed=False)
+    byte_array = byte_array[:index_size_of_last]
+    if size_of_last == 0:
+        size_of_last = size
+    i = 0
+    length = len(byte_array) // size
     for encrypted_bytes in chunks(byte_array, size):
         encrypted = int.from_bytes(encrypted_bytes, byteorder='big', signed=False)
         decrypted = int(gmpy2.powmod(encrypted, secret_key, n))
-        decrypted_bytes = decrypted.to_bytes(int(gmpy2.ceil(decrypted.bit_length() / 8)), byteorder='big', signed=False)
+        if i == length - 1:
+            decrypted_bytes = decrypted.to_bytes(size_of_last, byteorder='big', signed=False)
+        else:
+            decrypted_bytes = decrypted.to_bytes(size, byteorder='big', signed=False)
         result.extend(decrypted_bytes)
+        i += 1
         # print(decrypted_bytes, decrypted, encrypted, encrypted_bytes)
     return result
 
@@ -45,7 +58,6 @@ if __name__ == '__main__':
         if to_decrypt:
             file = open('.rsaprivate', 'r')
             d = int(file.readline())
-            print(d)
             n = int(file.readline())
             file.close()
             print('Start decryption for file:', path)
@@ -54,7 +66,6 @@ if __name__ == '__main__':
         else:
             file = open('.rsapublic', 'r')
             e = int(file.readline())
-            print(e)
             n = int(file.readline())
             file.close()
             print('Start encryption for file:', path)

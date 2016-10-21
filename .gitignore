@@ -4,3 +4,6 @@
 *.txt
 .idea
 *.out
+hello_world.c
+.rsaprivate
+.rsapublic

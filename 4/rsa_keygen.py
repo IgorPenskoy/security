@@ -1,8 +1,8 @@
 #!/usr/bin/python3
 import argparse
 import gmpy2
-import time
 
+import time
 RANDOM_STATE = gmpy2.random_state(int(round(time.time() * 1000)))
 
 
@@ -13,25 +13,20 @@ def get_prime_lt(num):
     return prime
 
 
-def get_coprime_lt(x):
-    y = x - 1
+def get_coprime(x):
+    y = int(gmpy2.mpz_random(RANDOM_STATE, (x - 1) // 2)) + (x - 1) // 3
     while gmpy2.gcd(x, y) != 1:
         y -= 1
     return y
 
 
 def key_gen(size):
-    p = get_prime_lt(2 ** (size // 2))
+    p = get_prime_lt(2 ** (size // 2) - 1)
     q = get_prime_lt(p)
-    print(p, q)
     n = gmpy2.mul(p, q)
-    print(n)
     x = gmpy2.mul((p - 1), (q - 1))
-    print(x)
-    e = 65537
-    print(e)
+    e = get_coprime(x)
     d = gmpy2.invert(e, x)
-    print(d)
     return e, d, n
 
 if __name__ == '__main__':

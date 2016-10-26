@@ -24,9 +24,9 @@ def key_gen(size):
     p = get_prime_lt(2 ** (size // 2) - 1)
     q = get_prime_lt(p)
     n = gmpy2.mul(p, q)
-    x = gmpy2.mul((p - 1), (q - 1))
-    e = get_coprime(x)
-    d = gmpy2.invert(e, x)
+    m = gmpy2.mul((p - 1), (q - 1))
+    e = get_coprime(m)
+    d = gmpy2.invert(e, m)
     return e, d, n
 
 if __name__ == '__main__':

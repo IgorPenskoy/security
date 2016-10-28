@@ -1,3 +1,6 @@
+*
+!/**/
+!*.*
 *.exe
 *.bin
 *.so
@@ -7,3 +10,9 @@
 hello_world.c
 .rsaprivate
 .rsapublic
+__pycache__
+*.sign
+.sender_private_key
+.sender_public_key
+.receiver_private_key
+.receiver_public_key

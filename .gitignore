@@ -17,3 +17,4 @@ __pycache__
 .receiver_private_key
 .receiver_public_key
 *.tar.gz
+*.lzw

@@ -18,3 +18,5 @@ __pycache__
 .receiver_public_key
 *.tar.gz
 *.lzw
+*.decompress
+*.jpg

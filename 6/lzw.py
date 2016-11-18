@@ -72,9 +72,7 @@ def decompress(text):
         dictionary[dict_size] = tmp.to01()
         dict_size += 1
         if power_of_two(dict_size + 1):
-            code_size = dict_size.bit_length() + 1
-        else:
-            code_size = dict_size.bit_length()
+            code_size += 1
         w = bitarray()
         w.extend(entry)
     return result

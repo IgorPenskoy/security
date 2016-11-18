@@ -1,79 +1,82 @@
+#!/usr/bin/python3
 import argparse
 from bitarray import bitarray
 
-def bits_from_int(number):
+def bits_from_int(number, size=8):
     a = bitarray(bin(number).replace('0b', ''))
-    while len(a) < 8:
+    while len(a) < size:
         a.insert(0, 0)
     return a
 
 def int_from_bits(bits):
     return int(bits.to01(), 2)
 
-def get_code(value, dictionary):
-    if len(value) == 1:
-        return bits_from_int(value[0])
-    try:
-        return bits_from_int(dictionary.index(value) + 256)
-    except IndexError:
-        return -1
-    except ValueError:
-        return -1
-
 def compress(text):
+    dict_size = 256
+    dictionary = {bits_from_int(i).to01(): i for i in range(dict_size)}
     result = bitarray()
-    dictionary = list()
-    w = list()
-    for k in text:
-        tmp = list(w)
-        tmp.append(k)
-        if tmp in dictionary or len(tmp) == 1:
-            w = list(tmp)
+    w = bitarray()
+    code_size = 8
+    for c in text:
+        wc = bitarray()
+        wc.extend(w)
+        wc.extend(bits_from_int(int(c)))
+        if wc.to01() in dictionary:
+            w = bitarray()
+            w.extend(wc)
         else:
-            dictionary.append(tmp)
-            # print(get_code(w, dictionary))
-            result.extend(get_code(w, dictionary))
-            w = [k]
-    if len(text) > 0:
-        result.extend(get_code(w, dictionary))
-    # print(get_code(w, dictionary))
-    # print(result)
+            result.extend(bits_from_int(dictionary[w.to01()], code_size))
+            dictionary[wc.to01()] = dict_size
+            dict_size += 1
+            code_size = dict_size.bit_length()
+            w = bitarray()
+            w.extend(bits_from_int(int(c)))
+    if len(w) > 0 and len(text) > 0:
+        result.extend(bits_from_int(dictionary[w.to01()], code_size))
     return result
 
+def power_of_two(value):
+    init_value = 1
+    while init_value < value:
+        init_value *= 2
+        if init_value == value:
+            return True
+    return False
+
 def decompress(text):
+    dict_size = 256
+    dictionary = {i: bits_from_int(i).to01() for i in range(dict_size)}
+    w = bitarray()
+    w.extend(text[:8])
     result = bitarray()
-    dictionary = list()
     result.extend(text[:8])
-    w = [text[:8]]
-    current_pos = 8
-    while current_pos + 7 < len(text):
-        length = (256 + len(dictionary)).bit_length()
-        k = text[current_pos:length + current_pos]
-        code = int_from_bits(k)
-        if code > 255 and code <= len(dictionary) + 256:
-            if code < len(dictionary) + 256:
-                for byte in dictionary[code - 256]:
-                    result.extend(byte)
-                entry = dictionary[code - 256]
-                # print(dictionary[code - 256])
-            elif code == len(dictionary) + 256:
-                entry = list(w)
-                entry.append(w[0])
-                for byte in entry:
-                    result.extend(byte)
-            current_pos += length
-            tmp = list(w)
-            tmp.append(entry[0])
-            dictionary.append(tmp)
-            w = list(dictionary[code - 256])
+    pos = 8
+    code_size = 9
+    while pos + code_size <= len(text):
+        k = int_from_bits(text[pos:pos + code_size])
+        pos += code_size
+        if k in dictionary:
+            entry = bitarray()
+            entry.extend(dictionary[k])
+        elif k == dict_size:
+            entry = bitarray()
+            entry.extend(w)
+            entry.extend(w[:8])
         else:
-            k = text[current_pos:8 + current_pos]
-            result.extend(k)
-            current_pos += 8
-            tmp = list(w)
-            tmp.append(k)
-            dictionary.append(tmp)
-            w = [k]
+            print('Bad compressed k: %s' % k)
+            exit()
+        result.extend(entry)
+        tmp = bitarray()
+        tmp.extend(w)
+        tmp.extend(entry[:8])
+        dictionary[dict_size] = tmp.to01()
+        dict_size += 1
+        if power_of_two(dict_size + 1):
+            code_size = dict_size.bit_length() + 1
+        else:
+            code_size = dict_size.bit_length()
+        w = bitarray()
+        w.extend(entry)
     return result
 
 if __name__ == '__main__':
